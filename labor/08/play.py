@@ -1,5 +1,10 @@
 import os
 import matplotlib.pyplot as plt
+import functools
+
+
+def is_actor(line, actor) -> bool:
+    return line == actor.upper()
 
 
 class Play:
@@ -11,6 +16,12 @@ class Play:
         self.__fetch_scenes(directory)
 
     def __fetch_scenes(self, directory: str) -> None:
+        fil = lambda fname: os.path.splitext(fname)[-1] == '.txt'
+        self.scenes = list(map(lambda file: Scene(directory+'/'+file),
+                               filter(fil, os.listdir(directory))))
+        self.actors = {a for s in self.scenes for a in s.actors}
+
+        return None
         for filename in os.listdir(directory):
             if os.path.splitext(filename)[-1] == '.txt':
                 self.scenes.append(Scene(directory+'/'+filename))
@@ -26,7 +37,13 @@ class Play:
         scenes = [self.scene_count(a) for a in actors]
         ax1.barh(actors, scenes)
         ax1.set_xticks(range(1+max(scenes)))
-        apps = [sum([s.speech_count(a) for s in self.scenes]) for a in actors]
+        fun = lambda count, sc, actor: count + sc.speech_count(actor)
+        apps = [functools.reduce(functools.partial(fun, actor=a),
+                                 self.scenes,
+                                 0
+                                 )
+                for a in actors]
+        #apps = [sum([s.speech_count(a) for s in self.scenes]) for a in actors]
         ax2.pie(apps, labels=actors)
         plt.show()
 
@@ -37,7 +54,8 @@ class Scene:
         self.lines = None
         try:
             with open(filename) as file:
-                self.lines = [line.strip() for line in file.readlines()]
+                self.lines = list(map(lambda line: line.strip(), file))
+                #self.lines = [line.strip() for line in file.readlines()]
                 self.__fetch_actors()
         except FileNotFoundError:
             print(f'File {filename} is not available.')
@@ -48,6 +66,11 @@ class Scene:
                 self.actors.add(line)
 
     def speech_count(self, actor: str) -> int:
+        checker = functools.partial(is_actor, actor=actor)
+        return functools.reduce(lambda count, _: count + 1,
+                                filter(checker, self.lines),
+                                0
+                                )
         return sum([1 for line in self.lines if line == actor.upper()])
 
 
@@ -73,5 +96,5 @@ if __name__ == '__main__':
 
     play.show_charts()
 
-    play = Play('William Shakespeare', 'Hamlet', './hamlet-full')
-    play.show_charts()
+    #play = Play('William Shakespeare', 'Hamlet', './hamlet-full')
+    # play.show_charts()
