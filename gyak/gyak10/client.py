@@ -54,7 +54,9 @@ window.title('Simple Chat App')
 window.geometry('600x600')
 
 message_frame = tkinter.Frame(window)
-messages = tkinter.Listbox(message_frame, font="large")
+scrollbar = tkinter.Scrollbar(message_frame)
+messages = tkinter.Listbox(message_frame, yscrollcommand=scrollbar.set, font="large")
+scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
 messages.pack(side=tkinter.LEFT, fill=tkinter.BOTH, expand=tkinter.YES)
 message_frame.pack(fill=tkinter.BOTH, expand=tkinter.YES)
 
